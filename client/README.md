@@ -1,12 +1,89 @@
-# React + Vite
+# Heylo - Frontend (Client)
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+This is the frontend application for Heylo, a real-time chat application built with React and Vite.
 
-Currently, two official plugins are available:
+## 🚀 Quick Start
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+```bash
+# Install dependencies
+npm install
 
-## Expanding the ESLint configuration
+# Start development server
+npm run dev
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+# Build for production
+npm run build
+
+# Preview production build
+npm run preview
+```
+
+## 🛠️ Tech Stack
+
+- **React 19** - UI library
+- **Vite** - Build tool and development server
+- **Tailwind CSS** - Utility-first CSS framework
+- **React Router DOM** - Client-side routing
+- **Socket.io Client** - Real-time communication
+- **Axios** - HTTP client
+- **React Hot Toast** - Toast notifications
+
+## 📁 Project Structure
+
+```
+src/
+├── components/         # Reusable UI components
+│   ├── ChatContainer.jsx
+│   ├── RightSidebar.jsx
+│   └── Sidebar.jsx
+├── pages/             # Page components
+│   ├── HomePage.jsx
+│   ├── LoginPage.jsx
+│   └── ProfilePage.jsx
+├── assets/            # Static assets
+├── lib/               # Utility functions
+├── App.jsx            # Main app component
+└── main.jsx           # Entry point
+
+context/               # React contexts (outside src)
+├── AuthContext.jsx    # Authentication state
+└── ChatContext.jsx    # Chat state
+
+public/                # Public assets
+```
+
+## 🔧 Environment Variables
+
+Create a `.env` file in the root directory:
+
+```env
+VITE_BACKEND_URL=http://localhost:3000
+```
+
+For production:
+```env
+VITE_BACKEND_URL=https://your-backend-domain.vercel.app
+```
+
+## 🌐 Deployment
+
+This app is configured for deployment on Vercel with the `vercel.json` configuration for SPA routing.
+
+### Deploy to Vercel
+
+1. Install Vercel CLI: `npm i -g vercel`
+2. Run: `vercel --prod`
+3. Configure environment variables in Vercel dashboard
+
+## 📱 Features
+
+- **Real-time messaging** with Socket.io
+- **User authentication** with JWT
+- **Image sharing** with drag & drop
+- **Online status** indicators
+- **Responsive design** for all devices
+- **Modern UI** with Tailwind CSS
+
+---
+
+For complete setup instructions, see the main [README.md](../README.md) in the project root.
