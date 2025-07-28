@@ -23,9 +23,18 @@ export const AuthProvider = ({ children }) => {
           if(data.success){
             setAuthUser(data.user);
             connectSocket(data.user);
+          } else {
+            // If authentication fails, clear the token
+            localStorage.removeItem('token');
+            setToken(null);
+            axios.defaults.headers.common['token'] = null;
           }
       } catch (error) {
-          toast.error(error.message || "Authentication failed");
+          // If authentication fails, clear the token
+          localStorage.removeItem('token');
+          setToken(null);
+          axios.defaults.headers.common['token'] = null;
+          console.log("Authentication check failed:", error.response?.data?.message || error.message);
       }
     }
 
@@ -98,8 +107,8 @@ export const AuthProvider = ({ children }) => {
     useEffect(() => {
         if(token){
           axios.defaults.headers.common['token'] = token;
+          checkAuth();
         }
-        checkAuth();
     },[])
 
 
