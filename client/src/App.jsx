@@ -13,8 +13,8 @@ const App = () => {
   
   
   return (
-    /* remove bg-center bg-no repeat min-h-screen and w-full if not working  also change bg image to Heylo Airbrush*/
-    <div className="bg-[url('./bgImage2.svg')] bg-cover bg-center bg-no-repeat min-h-screen w-full">
+    /* Background image from public folder for proper Vite build */
+    <div className="bg-[url('/bgImage2.svg')] bg-cover bg-center bg-no-repeat min-h-screen w-full">
       <Toaster />
       <Routes>
         <Route path='/' element={authUser ? <HomePage/> : <Navigate to='/login' />}/>
