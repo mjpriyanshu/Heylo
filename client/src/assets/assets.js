@@ -5,6 +5,7 @@ import logo_icon from './logo_icon.svg'
 import logo_big from './logo_big.svg'
 import logo from './logo.png'
 import HeyloLogo from './HeyloLogo.png'
+import Heylo from './Heylo.png'
 import profile_richard from './profile_richard.png'
 import profile_alison from './profile_alison.png'
 import profile_enrique from './profile_enrique.png'
@@ -31,6 +32,7 @@ const assets = {
     logo_icon,
     logo,
     HeyloLogo,
+    Heylo,
     search_icon,
     send_button,
     menu_icon,
