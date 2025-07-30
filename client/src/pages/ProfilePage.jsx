@@ -37,11 +37,11 @@ const ProfilePage = () => {
         <div className='w-5/6 max-w-2xl backdrop-blur-2xl text-gray-300 border-2 border-gray-600 flex items-center justify-between max-sm:flex-col-reverse rounded-lg'>
 
           <form onSubmit={handleSubmit} className='flex flex-col gap-5 p-10 flex-1'>
-
             <div className='flex items-center gap-3'>
               <img onClick={() => navigate('/')} src={assets.arrow_icon} alt="Back" className='md:hidden max-w-7 cursor-pointer'/>
               <h3 className='text-lg'>Profile Details</h3>
             </div>
+
 
             <label htmlFor="avatar" className='flex items-center gap-3'>
               <input onChange={(e) => setSelectedImage(e.target.files[0])} type="file" id='avatar' accept='.png, .jpg, .jpeg' hidden />
