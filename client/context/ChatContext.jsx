@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState } from "react";
+import { createContext, useContext, useEffect, useState, useRef } from "react";
 import { AuthContext } from "./AuthContext";
 import toast from "react-hot-toast";
 
@@ -14,9 +14,14 @@ export const ChatProvider = ({ children }) => {
     const [unseenMessages, setUnseenMessages] = useState({});
     const [friendRequests, setFriendRequests] = useState([]);
     const [sentRequests, setSentRequests] = useState([]);
-    //const [typingUsers, setTypingUsers] = useState([]); // Users who are currently typing
+    const selectedUserRef = useRef(null);
 
     const {socket, axios} = useContext(AuthContext);
+
+    // Keep ref updated with current selectedUser
+    useEffect(() => {
+        selectedUserRef.current = selectedUser;
+    }, [selectedUser]);
 
     
     // Function to get users to show in sidebar (All users)
@@ -61,39 +66,44 @@ export const ChatProvider = ({ children }) => {
         }
     }
 
-    // Function to subscribe to message for a selected user
-    const subscribeToMessages = async () => {
-        if(!socket) return;
-
-        socket.on("newMessage", (newMessage) => {
-            if(selectedUser && newMessage.senderId === selectedUser._id){
-                newMessage.isSeen = true;
-                setMessages(prev => [...prev, newMessage]);
-                axios.put(`/api/messages/mark/${newMessage._id}`);
-            }else{
-                setUnseenMessages(prev => ({
-                    ...prev,
-                    [newMessage.senderId]: (prev[newMessage.senderId] ? prev[newMessage.senderId]+1 : 1)
-                }));
-            }
-        })
-    }
-
-
-
-    // function to unsubscribe from messages
-    const unsubscribeFromMessages = () => {
-        if(!socket) return;
-        socket.off("newMessage");
-    }
-
-
-    useEffect(() => {
-        subscribeToMessages();
-        return () => {
-            unsubscribeFromMessages();
+    // Function to handle incoming messages
+    const handleNewMessage = (newMessage) => {
+        const currentSelectedUser = selectedUserRef.current;
+        
+        if(currentSelectedUser && newMessage.senderId === currentSelectedUser._id){
+            newMessage.isSeen = true;
+            setMessages(prev => [...prev, newMessage]);
+            axios.put(`/api/messages/mark/${newMessage._id}`);
+        }else{
+            setUnseenMessages(prev => ({
+                ...prev,
+                [newMessage.senderId]: (prev[newMessage.senderId] ? prev[newMessage.senderId]+1 : 1)
+            }));
         }
-    },[socket, selectedUser]);
+    };
+
+    // Subscribe to socket messages once
+    useEffect(() => {
+        if(!socket) return;
+
+        socket.on("newMessage", handleNewMessage);
+
+        return () => {
+            socket.off("newMessage", handleNewMessage);
+        }
+    },[socket]);
+
+    // Update messages when selectedUser changes
+    useEffect(() => {
+        if(selectedUser) {
+            // Mark any unseen messages from this user as seen
+            setUnseenMessages(prev => {
+                const updated = {...prev};
+                delete updated[selectedUser._id];
+                return updated;
+            });
+        }
+    }, [selectedUser]);
 
     // Friend-related functions
     const sendFriendRequest = async (recipientId) => {

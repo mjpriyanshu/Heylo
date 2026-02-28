@@ -15,7 +15,11 @@ const server = http.createServer(app);
 
 // Create Socket.io server
 export const io = new Server(server, {
-    cors: {origin: "*"}
+    cors: {origin: "*"},
+    pingTimeout: 60000,
+    pingInterval: 25000,
+    transports: ['websocket', 'polling'],
+    allowEIO3: true
 })
 
 //Store Online Users

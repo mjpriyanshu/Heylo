@@ -67,7 +67,10 @@ export const AuthProvider = ({ children }) => {
       setOnlineUsers([]);
       axios.defaults.headers.common['token'] = null;
       toast.success("Logout successful");
-      socket.disconnect();
+      if(socket) {
+        socket.disconnect();
+        setSocket(null);
+      }
     }
 
 
@@ -111,8 +114,26 @@ export const AuthProvider = ({ children }) => {
       const newSocket = io(backendUrl, {
         query: {
           userId: userData._id,
-        }
+        },
+        reconnection: true,
+        reconnectionDelay: 1000,
+        reconnectionDelayMax: 5000,
+        reconnectionAttempts: 5,
+        transports: ['websocket', 'polling']
       });
+      
+      newSocket.on('connect', () => {
+        console.log('Socket connected');
+      });
+
+      newSocket.on('disconnect', () => {
+        console.log('Socket disconnected');
+      });
+
+      newSocket.on('reconnect', (attemptNumber) => {
+        console.log('Socket reconnected after', attemptNumber, 'attempts');
+      });
+
       newSocket.connect();
 
       setSocket(newSocket);
