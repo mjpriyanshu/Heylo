@@ -3,11 +3,14 @@ import User from "../models/User.js";
 import cloudinary from "../lib/cloudinary.js";
 import {io, userSocketMap} from "../server.js";
 
-// Get all users except the logged-in user
+// Get all friends for sidebar (only friends can chat)
 export const getUsersForSidebar = async (req, res) => {
     try {
         const userId = req.user._id; 
-        const filteredUsers = await User.find({ _id: { $ne: userId }}).select("-password");
+        
+        // Get user with populated friends
+        const user = await User.findById(userId).populate('friends', '-password');
+        const filteredUsers = user.friends;
 
         // Count number of messages not seen by the user
         const unseenMessages = {}
@@ -29,11 +32,18 @@ export const getUsersForSidebar = async (req, res) => {
 }
 
 
-// Get messages for selected user
+// Get messages for selected user (only if they are friends)
 export const getMessages = async (req, res) => {
     try {
         const {id : selectedUserId} = req.params;
         const myId = req.user._id;
+
+        // Check if users are friends
+        const user = await User.findById(myId);
+        if (!user.friends.includes(selectedUserId)) {
+            return res.json({ success: false, message: "You can only view messages from your friends" });
+        }
+
         const messages = await Message.find({
             $or: [
                 { senderId: myId, receiverId: selectedUserId },
@@ -70,12 +80,18 @@ export const markMessagesAsSeen = async (req, res) => {
 }
 
 
-// Send a message to a user
+// Send a message to a user (only if they are friends)
 export const sendMessage = async (req, res) => {
     try {
         const {text, image} = req.body;
         const receiverId = req.params.id; // ID of the user to whom the message is sent
         const senderId = req.user._id;
+
+        // Check if users are friends
+        const sender = await User.findById(senderId);
+        if (!sender.friends.includes(receiverId)) {
+            return res.json({ success: false, message: "You can only send messages to your friends" });
+        }
 
         let imageUrl;
         if(image){
