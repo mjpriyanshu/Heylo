@@ -12,6 +12,8 @@ export const ChatProvider = ({ children }) => {
     const [users, setUsers] = useState([]);
     const [selectedUser, setSelectedUser] = useState(null);
     const [unseenMessages, setUnseenMessages] = useState({});
+    const [friendRequests, setFriendRequests] = useState([]);
+    const [sentRequests, setSentRequests] = useState([]);
     //const [typingUsers, setTypingUsers] = useState([]); // Users who are currently typing
 
     const {socket, axios} = useContext(AuthContext);
@@ -93,6 +95,100 @@ export const ChatProvider = ({ children }) => {
         }
     },[socket, selectedUser]);
 
+    // Friend-related functions
+    const sendFriendRequest = async (recipientId) => {
+        try {
+            const {data} = await axios.post('/api/friends/request/send', {recipientId});
+            if(data.success){
+                toast.success(data.message);
+                setSentRequests(prev => [...prev, {_id: recipientId}]);
+            }else{
+                toast.error(data.message);
+            }
+        } catch (error) {
+            toast.error(error.message);
+        }
+    }
+
+    const acceptFriendRequest = async (senderId) => {
+        try {
+            const {data} = await axios.post('/api/friends/request/accept', {senderId});
+            if(data.success){
+                toast.success(data.message);
+                setFriendRequests(prev => prev.filter(req => req._id !== senderId));
+                getUsers(); // Refresh friends list
+            }else{
+                toast.error(data.message);
+            }
+        } catch (error) {
+            toast.error(error.message);
+        }
+    }
+
+    const rejectFriendRequest = async (senderId) => {
+        try {
+            const {data} = await axios.post('/api/friends/request/reject', {senderId});
+            if(data.success){
+                toast.success(data.message);
+                setFriendRequests(prev => prev.filter(req => req._id !== senderId));
+            }else{
+                toast.error(data.message);
+            }
+        } catch (error) {
+            toast.error(error.message);
+        }
+    }
+
+    const cancelFriendRequest = async (recipientId) => {
+        try {
+            const {data} = await axios.post('/api/friends/request/cancel', {recipientId});
+            if(data.success){
+                toast.success(data.message);
+                setSentRequests(prev => prev.filter(req => req._id !== recipientId));
+            }else{
+                toast.error(data.message);
+            }
+        } catch (error) {
+            toast.error(error.message);
+        }
+    }
+
+    const getFriendRequests = async () => {
+        try {
+            const {data} = await axios.get('/api/friends/requests/pending');
+            if(data.success){
+                setFriendRequests(data.requests);
+            }
+        } catch (error) {
+            toast.error(error.message);
+        }
+    }
+
+    const getSentRequests = async () => {
+        try {
+            const {data} = await axios.get('/api/friends/requests/sent');
+            if(data.success){
+                setSentRequests(data.sentRequests);
+            }
+        } catch (error) {
+            toast.error(error.message);
+        }
+    }
+
+    const removeFriend = async (friendId) => {
+        try {
+            const {data} = await axios.post('/api/friends/remove', {friendId});
+            if(data.success){
+                toast.success(data.message);
+                getUsers(); // Refresh friends list
+            }else{
+                toast.error(data.message);
+            }
+        } catch (error) {
+            toast.error(error.message);
+        }
+    }
+
     const value = {
         messages,
         setMessages,
@@ -104,7 +200,17 @@ export const ChatProvider = ({ children }) => {
         setUnseenMessages,
         getUsers,
         getMessages,
-        sendMessage
+        sendMessage,
+        // Friend-related
+        friendRequests,
+        sentRequests,
+        sendFriendRequest,
+        acceptFriendRequest,
+        rejectFriendRequest,
+        cancelFriendRequest,
+        getFriendRequests,
+        getSentRequests,
+        removeFriend
     }
 
     return (

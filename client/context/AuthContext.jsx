@@ -87,6 +87,24 @@ export const AuthProvider = ({ children }) => {
     }
 
 
+    // Check username availability function
+    const checkUsername = async (username) => {
+      try {
+        const {data} = await axios.post('/api/auth/check-username', {username});
+        if(data.success){
+            toast.success(data.message || "Username is available");
+            return true;
+        }else{
+            toast.error(data.message || "Username not available");
+            return false;
+        }
+      } catch (error) {
+        toast.error(error.response?.data?.message || "Failed to check username");
+        return false;
+      }
+    }
+
+
     // Connect socket function to handle socket connection and online user updates
     const connectSocket = (userData)=>{
       if(!userData || socket?.connected) return;
@@ -119,7 +137,8 @@ export const AuthProvider = ({ children }) => {
         socket,
         login,
         logout,
-        updateProfile
+        updateProfile,
+        checkUsername
     }
 
   return (
