@@ -2,6 +2,8 @@ import { generateToken } from "../lib/utils.js";
 import User from "../models/User.js";
 import bcrypt from 'bcryptjs';
 import cloudinary from '../lib/cloudinary.js';
+import jwt from 'jsonwebtoken';
+import { sendPasswordResetEmail, sendPasswordResetConfirmation } from '../lib/nodemailer.js';
 
 
 // Sign up new User using model {User.js}
@@ -237,3 +239,110 @@ export const checkUsernameAvailability = async (req, res) => {
         res.json({success: false, message: error.message});
     }
 }
+
+
+
+// Controller for forgot password - sends reset email
+export const forgotPassword = async (req, res) => {
+    try {
+        const { email } = req.body;
+
+        if (!email) {
+            return res.json({ success: false, message: "Email is required" });
+        }
+
+        // Validate email format
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(email)) {
+            return res.json({ success: false, message: "Please enter a valid email address" });
+        }
+
+        // Find user by email
+        const user = await User.findOne({ email: email.toLowerCase() });
+        if (!user) {
+            // For security, don't reveal if email exists or not
+            return res.json({ success: true, message: "If an account exists with this email, a password reset link has been sent" });
+        }
+
+        // Generate JWT token for password reset (expires in 1 hour)
+        const resetToken = jwt.sign(
+            { userId: user._id, email: user.email },
+            process.env.JWT_SECRET,
+            { expiresIn: '1h' }
+        );
+
+        // Save reset token and expiry to database
+        user.resetPasswordToken = resetToken;
+        user.resetPasswordExpires = Date.now() + 3600000; // 1 hour
+        await user.save();
+
+        // Send email
+        const emailResult = await sendPasswordResetEmail(user.email, resetToken, user.fullName);
+        
+        if (!emailResult.success) {
+            return res.json({ success: false, message: "Failed to send reset email. Please try again later." });
+        }
+
+        res.json({ success: true, message: "Password reset link has been sent to your email address" });
+
+    } catch (error) {
+        console.log(error.message);
+        res.json({ success: false, message: "An error occurred. Please try again later." });
+    }
+};
+
+
+
+// Controller for reset password - validates token and updates password
+export const resetPassword = async (req, res) => {
+    try {
+        const { token, newPassword } = req.body;
+
+        if (!token || !newPassword) {
+            return res.json({ success: false, message: "Token and new password are required" });
+        }
+
+        // Validate password length
+        if (newPassword.length < 6) {
+            return res.json({ success: false, message: "Password must be at least 6 characters" });
+        }
+
+        // Verify JWT token
+        let decoded;
+        try {
+            decoded = jwt.verify(token, process.env.JWT_SECRET);
+        } catch (error) {
+            return res.json({ success: false, message: "Invalid or expired reset token" });
+        }
+
+        // Find user with valid reset token
+        const user = await User.findOne({
+            _id: decoded.userId,
+            resetPasswordToken: token,
+            resetPasswordExpires: { $gt: Date.now() }
+        });
+
+        if (!user) {
+            return res.json({ success: false, message: "Invalid or expired reset token" });
+        }
+
+        // Hash new password
+        const salt = await bcrypt.genSalt(10);
+        const hashedPassword = await bcrypt.hash(newPassword, salt);
+
+        // Update password and clear reset token
+        user.password = hashedPassword;
+        user.resetPasswordToken = undefined;
+        user.resetPasswordExpires = undefined;
+        await user.save();
+
+        // Send confirmation email
+        await sendPasswordResetConfirmation(user.email, user.fullName);
+
+        res.json({ success: true, message: "Password has been reset successfully. You can now log in with your new password." });
+
+    } catch (error) {
+        console.log(error.message);
+        res.json({ success: false, message: "An error occurred. Please try again later." });
+    }
+};

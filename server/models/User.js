@@ -13,6 +13,8 @@ const userSchema = new mongoose.Schema({
     friends: [{type: mongoose.Schema.Types.ObjectId, ref: 'User'}],
     friendRequestsSent: [{type: mongoose.Schema.Types.ObjectId, ref: 'User'}],
     friendRequestsReceived: [{type: mongoose.Schema.Types.ObjectId, ref: 'User'}],
+    resetPasswordToken: {type: String},
+    resetPasswordExpires: {type: Date},
 }, {timestamps: true});
 
 const User = mongoose.model("User", userSchema);
