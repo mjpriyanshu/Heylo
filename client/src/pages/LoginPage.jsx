@@ -1,6 +1,7 @@
 import React, { useContext, useState } from 'react'
 import assets from '../assets/assets'
 import { AuthContext } from '../../context/AuthContext'
+import { useNavigate } from 'react-router-dom'
 
 const LoginPage = () => {
 
@@ -14,6 +15,7 @@ const LoginPage = () => {
   const [isDataSubmitted, setIsDataSubmitted] = useState(false)
 
   const {login, checkUsername} = useContext(AuthContext);
+  const navigate = useNavigate();
 
   const onSubmitHandler = async (e) => {
       e.preventDefault();
@@ -56,8 +58,19 @@ const LoginPage = () => {
                   <input onChange={(e) => setEmail(e.target.value)} value={email}
                    type="email" placeholder='Email Address' required className='p-2 border border-gray-500 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm md:text-base'/>
                   
-                  <input onChange={(e) => setPassword(e.target.value)} value={password}
-                   type="password" placeholder='Password (min 6 chars)' required minLength={6} className='p-2 border border-gray-500 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm md:text-base'/>
+                  <div className='flex flex-col gap-1'>
+                    <input onChange={(e) => setPassword(e.target.value)} value={password}
+                     type="password" placeholder='Password (min 6 chars)' required minLength={6} className='p-2 border border-gray-500 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm md:text-base'/>
+                    
+                    {currState === "Login" && (
+                      <span 
+                        onClick={() => navigate('/forgot-password')} 
+                        className='text-violet-400 hover:text-violet-300 text-xs cursor-pointer self-end transition-colors'
+                      >
+                        Forgot Password?
+                      </span>
+                    )}
+                  </div>
               </>
             )}
 
