@@ -38,18 +38,42 @@ export const getMessages = async (req, res) => {
         const {id : selectedUserId} = req.params;
         const myId = req.user._id;
 
+        const limitRaw = Number.parseInt(req.query.limit, 10);
+        const limit = Number.isFinite(limitRaw) ? Math.min(Math.max(limitRaw, 1), 100) : 50;
+
+        const cursorRaw = req.query.cursor;
+        const cursorDate = cursorRaw ? new Date(cursorRaw) : null;
+        if (cursorRaw && Number.isNaN(cursorDate.getTime())) {
+            return res.json({ success: false, message: "Invalid cursor" });
+        }
+
         // Check if users are friends
         const user = await User.findById(myId);
         if (!user.friends.includes(selectedUserId)) {
             return res.json({ success: false, message: "You can only view messages from your friends" });
         }
 
-        const messages = await Message.find({
+        const query = {
             $or: [
                 { senderId: myId, receiverId: selectedUserId },
                 { senderId: selectedUserId, receiverId: myId }
             ]
-        })
+        };
+
+        if (cursorDate) {
+            query.createdAt = { $lt: cursorDate };
+        }
+
+        // Fetch newest first for efficiency, then reverse for UI-friendly oldest->newest ordering.
+        let messages = await Message.find(query)
+            .sort({ createdAt: -1 })
+            .limit(limit + 1)
+            .lean();
+
+        const hasMore = messages.length > limit;
+        messages = messages.slice(0, limit);
+        const nextCursor = messages.length ? messages[messages.length - 1].createdAt : null;
+        messages.reverse();
 
         // Mark messages as seen if they are from the selected user
         await Message.updateMany(
@@ -57,7 +81,15 @@ export const getMessages = async (req, res) => {
             { seen: true }
         );
 
-        res.json({ success: true, messages});
+        res.json({
+            success: true,
+            messages,
+            pagination: {
+                limit,
+                hasMore,
+                nextCursor,
+            },
+        });
 
     } catch (error) {
         console.log(error.message);
