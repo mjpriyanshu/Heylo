@@ -10,21 +10,33 @@ export const getUsersForSidebar = async (req, res) => {
         
         // Get user with populated friends
         const user = await User.findById(userId).populate('friends', '-password');
+        if (!user) {
+            return res.json({ success: false, message: "User not found" });
+        }
+
         const filteredUsers = user.friends;
+        const friendIds = filteredUsers.map((friend) => friend._id);
 
-        // Count number of messages not seen by the user
-        const unseenMessages = {}
+        // Count unseen messages in a single query (fixes N+1)
+        const unseenMessages = {};
+        if (friendIds.length) {
+            const unreadCounts = await Message.aggregate([
+                {
+                    $match: {
+                        receiverId: userId,
+                        seen: false,
+                        senderId: { $in: friendIds },
+                    },
+                },
+                { $group: { _id: "$senderId", count: { $sum: 1 } } },
+            ]);
 
-        const promises = filteredUsers.map(async (user) => {
-            const messages = await Message.find({senderId: user._id, receiverId: userId, seen: false});
-
-            if(messages.length > 0) {
-                unseenMessages[user._id] = messages.length;
+            for (const row of unreadCounts) {
+                unseenMessages[String(row._id)] = row.count;
             }
-        })
+        }
 
-        await Promise.all(promises);
-        res.json({success: true, users: filteredUsers, unseenMessages});
+        res.json({ success: true, users: filteredUsers, unseenMessages });
     } catch (error) {
         console.log(error.message);
         res.json({success: false, message: "Failed to fetch users"});

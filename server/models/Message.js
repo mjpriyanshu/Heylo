@@ -8,6 +8,8 @@ const messageSchema = new mongoose.Schema({
     seen: {type: Boolean, default: false},
 }, {timestamps: true});
 
+messageSchema.index({ receiverId: 1, seen: 1, senderId: 1, createdAt: -1 });
+
 const Message = mongoose.model("Message", messageSchema);
 
 export default Message;
