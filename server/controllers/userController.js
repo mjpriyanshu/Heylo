@@ -1,4 +1,4 @@
-import { generateToken } from "../lib/utils.js";
+import { generateToken, getAuthCookieOptions, sanitizeUser } from "../lib/utils.js";
 import User from "../models/User.js";
 import bcrypt from 'bcryptjs';
 import cloudinary from '../lib/cloudinary.js';
@@ -83,7 +83,10 @@ export const signup = async (req, res) => {
         });
 
         const token = generateToken(newUser._id);
-        res.json({success: true, userData: newUser, token,  message: "User Account created successfully"});
+        const safeUser = sanitizeUser(newUser);
+
+        res.cookie('token', token, getAuthCookieOptions());
+        res.json({success: true, userData: safeUser, token,  message: "User Account created successfully"});
     } catch (error) {
         res.json({success: false, message: error.message});
         console.log(error.message);
@@ -108,7 +111,10 @@ export const login = async (req, res) => {
         }
 
         const token = generateToken(userData._id);
-        res.json({success: true, userData, token, message: "User logged in successfully"});
+        const safeUser = sanitizeUser(userData);
+
+        res.cookie('token', token, getAuthCookieOptions());
+        res.json({success: true, userData: safeUser, token, message: "User logged in successfully"});
 
 
     } catch (error) {
@@ -197,7 +203,8 @@ export const updateProfile = async (req, res) => {
             updatedUser = await User.findByIdAndUpdate(userId, {...updateData, profilePic: upload.secure_url}, {new: true});
         }
 
-        res.json({success: true, user: updatedUser, message: "Profile updated successfully"});
+        const safeUser = sanitizeUser(updatedUser);
+        res.json({success: true, user: safeUser, message: "Profile updated successfully"});
 
     } catch (error) {
         console.log(error.message);

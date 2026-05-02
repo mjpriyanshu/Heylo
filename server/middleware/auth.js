@@ -5,7 +5,11 @@ import jwt from 'jsonwebtoken';
 
 export const protectRoute = async (req, res, next) => {
     try {
-        const token = req.headers.token;
+        const authHeader = req.headers.authorization;
+        const bearerToken = authHeader?.startsWith('Bearer ')
+            ? authHeader.slice(7)
+            : null;
+        const token = req.cookies?.token || bearerToken || req.headers.token;
 
         if (!token) {
             return res.json({success: false, message: "No token provided"});
@@ -13,7 +17,7 @@ export const protectRoute = async (req, res, next) => {
 
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-        const user = await User.findById(decoded.userId).select('-password')
+        const user = await User.findById(decoded.userId).select('-password -resetPasswordToken -resetPasswordExpires')
         if (!user) {
             return res.json({success: false, message: "User not found"});
         }

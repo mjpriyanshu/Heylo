@@ -39,9 +39,18 @@ export const ChatProvider = ({ children }) => {
 
 
     // Function to get messages of selected user
-    const getMessages = async (userId) => {
+    const getMessages = async (userId, options = {}) => {
         try {
-            const {data} = await axios.get(`/api/messages/${userId}`);
+            const params = new URLSearchParams();
+            const limit = Number.isFinite(options.limit) ? options.limit : 50;
+            params.set("limit", String(limit));
+
+            if (options.cursor) {
+                params.set("cursor", options.cursor);
+            }
+
+            const qs = params.toString();
+            const {data} = await axios.get(`/api/messages/${userId}${qs ? `?${qs}` : ""}`);
             if(data.success){
                 setMessages(data.messages);
                 // setSelectedUser(data.user);
