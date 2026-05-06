@@ -1,5 +1,11 @@
 import jwt from 'jsonwebtoken';
 
+export const getConversationId = (userAId, userBId) => {
+    const a = String(userAId);
+    const b = String(userBId);
+    return [a, b].sort().join(':');
+}
+
 // Function to generate Token using JWT
 export const generateToken = (userId) => {
     const token = jwt.sign(
