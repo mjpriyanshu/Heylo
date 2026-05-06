@@ -5,10 +5,10 @@ import http from 'http';
 import cookieParser from 'cookie-parser';
 import rateLimit from 'express-rate-limit';
 import { connectDB } from './lib/db.js';
+import { initSocket, userSocketMap } from './lib/socket.js';
 import userRouter from './routes/userRoutes.js';
 import messageRouter from './routes/messageRoutes.js';
 import friendRouter from './routes/friendRoutes.js';
-import { Server } from 'socket.io';
 
 
 // Create Express app and Http server
@@ -49,38 +49,10 @@ const authLimiter = rateLimit({
 });
 
 // Create Socket.io server
-export const io = new Server(server, {
-    cors: {
-        origin: allowedOrigins.length > 0 ? allowedOrigins : true,
-        credentials: true
-    },
-    pingTimeout: 60000,
-    pingInterval: 25000,
-    transports: ['websocket', 'polling'],
-    allowEIO3: true
-})
+export const io = initSocket(server, allowedOrigins);
 
 //Store Online Users
-export const userSocketMap = {};    //{userId: socketId}
-
-// Socket.io connection Handler
-io.on('connection', (socket) => {
-    const userId = socket.handshake.query.userId;
-    console.log('User connected', userId);
-
-    if(userId) userSocketMap[userId] = socket.id;
-
-    //Emit online users to all clients
-    io.emit("getOnlineUsers", Object.keys(userSocketMap));
-
-    socket.on('disconnect', () => {
-        console.log('User disconnected', userId);
-        delete userSocketMap[userId];
-
-        //Emit online users to all clients
-        io.emit("getOnlineUsers", Object.keys(userSocketMap));
-    });
-});
+export { userSocketMap };
 
 // Middleware
 app.use(express.json({limit: '4mb'}));  //files upload only up to 4mb

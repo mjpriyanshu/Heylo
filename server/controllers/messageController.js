@@ -1,7 +1,8 @@
 import Message from "../models/Message.js";
 import User from "../models/User.js";
 import cloudinary from "../lib/cloudinary.js";
-import {io, userSocketMap} from "../server.js";
+import { getConversationId } from "../lib/utils.js";
+import { io, userSocketMap } from "../lib/socket.js";
 
 // Get all friends for sidebar (only friends can chat)
 export const getUsersForSidebar = async (req, res) => {
@@ -65,11 +66,14 @@ export const getMessages = async (req, res) => {
             return res.json({ success: false, message: "You can only view messages from your friends" });
         }
 
+        const conversationId = getConversationId(myId, selectedUserId);
+        // Backward-compatible rollout: include older messages that don't have conversationId yet.
         const query = {
             $or: [
-                { senderId: myId, receiverId: selectedUserId },
-                { senderId: selectedUserId, receiverId: myId }
-            ]
+                { conversationId },
+                { conversationId: { $exists: false }, senderId: myId, receiverId: selectedUserId },
+                { conversationId: { $exists: false }, senderId: selectedUserId, receiverId: myId },
+            ],
         };
 
         if (cursorDate) {
@@ -143,9 +147,12 @@ export const sendMessage = async (req, res) => {
             imageUrl = uploadResponse.secure_url;
         }
 
+        const conversationId = getConversationId(senderId, receiverId);
+
         const newMessage = await Message.create({
             senderId,
             receiverId,
+            conversationId,
             text,
             image: imageUrl
         });

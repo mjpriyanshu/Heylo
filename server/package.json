@@ -5,7 +5,8 @@
   "main": "server.js",
   "scripts": {
     "server": "nodemon server.js",
-    "start": "node server.js"
+    "start": "node server.js",
+    "backfill:conversationId": "node scripts/backfillConversationId.js"
   },
   "keywords": [],
   "author": "Priyanshu",
