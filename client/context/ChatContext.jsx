@@ -14,6 +14,7 @@ export const ChatProvider = ({ children }) => {
     const [unseenMessages, setUnseenMessages] = useState({});
     const [friendRequests, setFriendRequests] = useState([]);
     const [sentRequests, setSentRequests] = useState([]);
+    const [typingUsers, setTypingUsers] = useState({});
     const selectedUserRef = useRef(null);
 
     const {socket, axios} = useContext(AuthContext);
@@ -97,10 +98,50 @@ export const ChatProvider = ({ children }) => {
 
         socket.on("newMessage", handleNewMessage);
 
+        const onTyping = ({ fromUserId } = {}) => {
+            if (!fromUserId) return;
+            setTypingUsers(prev => ({ ...prev, [fromUserId]: true }));
+        };
+
+        const onStopTyping = ({ fromUserId } = {}) => {
+            if (!fromUserId) return;
+            setTypingUsers(prev => {
+                const next = { ...prev };
+                delete next[fromUserId];
+                return next;
+            });
+        };
+
+        const onMessagesSeen = ({ byUserId } = {}) => {
+            const currentSelectedUser = selectedUserRef.current;
+            if (!currentSelectedUser || !byUserId) return;
+            if (String(currentSelectedUser._id) !== String(byUserId)) return;
+
+            // Mark my outgoing messages in this thread as seen (no refetch)
+            setMessages(prev => prev.map(m => (String(m.senderId) !== String(byUserId) ? { ...m, seen: true } : m)));
+        };
+
+        socket.on('typing', onTyping);
+        socket.on('stopTyping', onStopTyping);
+        socket.on('messagesSeen', onMessagesSeen);
+
         return () => {
             socket.off("newMessage", handleNewMessage);
+            socket.off('typing', onTyping);
+            socket.off('stopTyping', onStopTyping);
+            socket.off('messagesSeen', onMessagesSeen);
         }
     },[socket]);
+
+    const emitTyping = (toUserId) => {
+        if (!socket || !toUserId) return;
+        socket.emit('typing', { toUserId });
+    };
+
+    const emitStopTyping = (toUserId) => {
+        if (!socket || !toUserId) return;
+        socket.emit('stopTyping', { toUserId });
+    };
 
     // Update messages when selectedUser changes
     useEffect(() => {
@@ -217,9 +258,12 @@ export const ChatProvider = ({ children }) => {
         setSelectedUser,
         unseenMessages,
         setUnseenMessages,
+        typingUsers,
         getUsers,
         getMessages,
         sendMessage,
+        emitTyping,
+        emitStopTyping,
         // Friend-related
         friendRequests,
         sentRequests,

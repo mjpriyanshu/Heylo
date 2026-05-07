@@ -10,14 +10,31 @@ import ImageViewer from './ImageViewer';
 
 const ChatContainer = () => {
 
-  const {messages, setSelectedUser, selectedUser, sendMessage, getMessages} = useContext(ChatContext);
+  const {messages, setSelectedUser, selectedUser, sendMessage, getMessages, emitTyping, emitStopTyping} = useContext(ChatContext);
   const {authUser, onlineUsers} = useContext(AuthContext);
   const navigate = useNavigate();
 
   const scrollEnd = useRef();
+  const typingTimeoutRef = useRef(null);
 
   const [input, setInput] = useState('');
   const [viewingImage, setViewingImage] = useState(null);
+
+  const handleTyping = (value) => {
+    setInput(value);
+    if (!selectedUser?._id) return;
+
+    emitTyping(selectedUser._id);
+
+    if (typingTimeoutRef.current) {
+      clearTimeout(typingTimeoutRef.current);
+    }
+
+    typingTimeoutRef.current = setTimeout(() => {
+      emitStopTyping(selectedUser._id);
+      typingTimeoutRef.current = null;
+    }, 900);
+  };
 
   // Handle sending message on Enter key press
   const handleSendMessage = async (e) => {
@@ -49,6 +66,17 @@ const ChatContainer = () => {
       getMessages(selectedUser._id);
     }
   },[selectedUser])
+
+  useEffect(() => {
+    return () => {
+      if (typingTimeoutRef.current) {
+        clearTimeout(typingTimeoutRef.current);
+      }
+      if (selectedUser?._id) {
+        emitStopTyping(selectedUser._id);
+      }
+    }
+  }, [selectedUser?._id])
 
 
   useEffect(() => {
@@ -116,7 +144,7 @@ const ChatContainer = () => {
         <div className='absolute bottom-0 left-0 right-0 flex items-center gap-2 md:gap-3 p-2 md:p-3'>
             <div className='flex-1 flex items-center bg-gray-100/12 px-2 md:px-3 rounded-full'>
                 <input 
-                  onChange={(e)=> setInput(e.target.value)} 
+                  onChange={(e)=> handleTyping(e.target.value)} 
                   value={input} 
                   onKeyDown={(e)=>e.key === "Enter" ? handleSendMessage(e) : null} 
                   type="text" 
