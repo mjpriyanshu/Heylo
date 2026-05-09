@@ -7,6 +7,7 @@ import { AuthContext } from '../../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import ImageViewer from './ImageViewer';
+import { uploadImageToCloudinary } from '../lib/cloudinary';
 
 const ChatContainer = () => {
 
@@ -30,17 +31,20 @@ const ChatContainer = () => {
   // Handle sending image
   const handleSendImage = async (e) => {
     const file = e.target.files[0];
+    e.target.value = ''; // Reset early so selecting same file works
     if(!file || !file.type.startsWith("image/")){
       toast.error("Please select a valid image file");
       return;
     }
-    const reader = new FileReader();
-    reader.onloadend = async () => {
-      await sendMessage({image: reader.result});
-      e.target.value = ''; // Reset the input field
+    const toastId = toast.loading('Uploading image...');
+    try {
+      const imageUrl = await uploadImageToCloudinary(file);
+      await sendMessage({ image: imageUrl });
+    } catch (error) {
+      toast.error(error?.message || 'Failed to upload image');
+    } finally {
+      toast.dismiss(toastId);
     }
-
-    reader.readAsDataURL(file);
   }
 
 

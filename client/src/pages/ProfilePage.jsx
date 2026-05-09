@@ -2,6 +2,8 @@ import React, { useContext, useState } from 'react'
 import {useNavigate} from 'react-router-dom';
 import assets from '../assets/assets';
 import { AuthContext } from '../../context/AuthContext';
+import toast from 'react-hot-toast';
+import { uploadImageToCloudinary } from '../lib/cloudinary';
 
 const ProfilePage = () => {
 
@@ -31,14 +33,17 @@ const ProfilePage = () => {
       navigate('/');
       return;
     }
-    
-    const reader = new FileReader();
-    reader.readAsDataURL(selectedImage);
-    reader.onloadend = async () => {
-      const base64Image = reader.result; // Get the base64 string
-      await updateProfile({fullName: name, username, bio, profilePic: base64Image, isPublic});
+
+    const toastId = toast.loading('Uploading profile image...');
+    try {
+      const imageUrl = await uploadImageToCloudinary(selectedImage);
+      await updateProfile({ fullName: name, username, bio, profilePic: imageUrl, isPublic });
       navigate('/');
-    } 
+    } catch (error) {
+      toast.error(error?.message || 'Failed to upload profile image');
+    } finally {
+      toast.dismiss(toastId);
+    }
 
   }
 

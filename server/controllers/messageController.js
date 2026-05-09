@@ -4,6 +4,16 @@ import cloudinary from "../lib/cloudinary.js";
 import { getConversationId } from "../lib/utils.js";
 import { io, userSocketMap } from "../lib/socket.js";
 
+const isHttpUrl = (value) => {
+    if (typeof value !== "string") return false;
+    try {
+        const url = new URL(value);
+        return url.protocol === "http:" || url.protocol === "https:";
+    } catch {
+        return false;
+    }
+};
+
 // Get all friends for sidebar (only friends can chat)
 export const getUsersForSidebar = async (req, res) => {
     try {
@@ -142,9 +152,19 @@ export const sendMessage = async (req, res) => {
         }
 
         let imageUrl;
-        if(image){
-            const uploadResponse = await cloudinary.uploader.upload(image);
-            imageUrl = uploadResponse.secure_url;
+        if (image) {
+            if (typeof image !== "string") {
+                return res.json({ success: false, message: "Invalid image" });
+            }
+
+            // Task 7: allow direct Cloudinary uploads from client (image is already a URL)
+            if (isHttpUrl(image)) {
+                imageUrl = image;
+            } else {
+                // Backward compatibility: older clients may still send base64/data URIs
+                const uploadResponse = await cloudinary.uploader.upload(image);
+                imageUrl = uploadResponse.secure_url;
+            }
         }
 
         const conversationId = getConversationId(senderId, receiverId);
