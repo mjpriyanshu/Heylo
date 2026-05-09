@@ -1,4 +1,5 @@
 import { Server } from 'socket.io';
+import jwt from 'jsonwebtoken';
 
 export const userSocketMap = {}; // { userId: socketId }
 export let io;
@@ -17,17 +18,52 @@ export const initSocket = (httpServer, allowedOrigins = []) => {
         allowEIO3: true,
     });
 
+    io.use((socket, next) => {
+        try {
+            const token = socket.handshake.auth?.token || socket.handshake.headers?.token;
+            if (!token) {
+                return next(new Error('Unauthorized'));
+            }
+
+            const decoded = jwt.verify(token, process.env.JWT_SECRET);
+            socket.userId = decoded.userId;
+            return next();
+        } catch {
+            return next(new Error('Unauthorized'));
+        }
+    });
+
     io.on('connection', (socket) => {
-        const userId = socket.handshake.query.userId;
+        const userId = socket.userId;
         console.log('User connected', userId);
 
-        if (userId) userSocketMap[userId] = socket.id;
+        if (userId) userSocketMap[String(userId)] = socket.id;
 
         io.emit('getOnlineUsers', Object.keys(userSocketMap));
 
+        socket.on('typing', (payload = {}) => {
+            const toUserId = payload?.toUserId;
+            if (!toUserId) return;
+
+            const receiverSocketId = userSocketMap[String(toUserId)];
+            if (receiverSocketId) {
+                io.to(receiverSocketId).emit('typing', { fromUserId: String(userId) });
+            }
+        });
+
+        socket.on('stopTyping', (payload = {}) => {
+            const toUserId = payload?.toUserId;
+            if (!toUserId) return;
+
+            const receiverSocketId = userSocketMap[String(toUserId)];
+            if (receiverSocketId) {
+                io.to(receiverSocketId).emit('stopTyping', { fromUserId: String(userId) });
+            }
+        });
+
         socket.on('disconnect', () => {
             console.log('User disconnected', userId);
-            delete userSocketMap[userId];
+            delete userSocketMap[String(userId)];
 
             io.emit('getOnlineUsers', Object.keys(userSocketMap));
         });

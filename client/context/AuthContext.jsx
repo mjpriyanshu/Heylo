@@ -45,7 +45,7 @@ export const AuthProvider = ({ children }) => {
           const {data} = await axios.post(`/api/auth/${state}`, credentials);
           if(data.success){
             setAuthUser(data.userData);
-            connectSocket(data.userData);
+            connectSocket(data.userData, data.token);
             axios.defaults.headers.common['token'] = data.token;
             setToken(data.token);
             localStorage.setItem('token', data.token);
@@ -109,11 +109,12 @@ export const AuthProvider = ({ children }) => {
 
 
     // Connect socket function to handle socket connection and online user updates
-    const connectSocket = (userData)=>{
-      if(!userData || socket?.connected) return;
+    const connectSocket = (userData, tokenOverride)=>{
+      const jwtToken = tokenOverride || token;
+      if(!userData || socket?.connected || !jwtToken) return;
       const newSocket = io(backendUrl, {
-        query: {
-          userId: userData._id,
+        auth: {
+          token: jwtToken,
         },
         reconnection: true,
         reconnectionDelay: 1000,

@@ -92,10 +92,20 @@ export const getMessages = async (req, res) => {
         messages.reverse();
 
         // Mark messages as seen if they are from the selected user
-        await Message.updateMany(
-            { senderId: selectedUserId, receiverId: myId},
+        const seenUpdate = await Message.updateMany(
+            { senderId: selectedUserId, receiverId: myId, seen: { $ne: true } },
             { seen: true }
         );
+
+        if ((seenUpdate?.modifiedCount || 0) > 0) {
+            const senderSocketId = userSocketMap[String(selectedUserId)];
+            if (senderSocketId) {
+                io.to(senderSocketId).emit('messagesSeen', {
+                    byUserId: String(myId),
+                    withUserId: String(selectedUserId),
+                });
+            }
+        }
 
         res.json({
             success: true,
@@ -119,7 +129,19 @@ export const getMessages = async (req, res) => {
 export const markMessagesAsSeen = async (req, res) => {
     try {
         const { id } = req.params;
-        await Message.findByIdAndUpdate(id, { seen: true });
+        const msg = await Message.findByIdAndUpdate(id, { seen: true }, { new: true }).lean();
+
+        if (msg) {
+            const otherUserId = String(msg.senderId);
+            const senderSocketId = userSocketMap[otherUserId];
+            if (senderSocketId) {
+                io.to(senderSocketId).emit('messagesSeen', {
+                    byUserId: String(msg.receiverId),
+                    withUserId: otherUserId,
+                    messageId: String(msg._id),
+                });
+            }
+        }
         res.json({ success: true, message: "Message marked as seen" });
     } catch (error) {
         console.log(error.message);
