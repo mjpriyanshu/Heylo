@@ -17,9 +17,10 @@ const Sidebar = () => {
   const filteredUsers = input ? users.filter(user => user.fullName.toLowerCase().includes(input.toLowerCase())) : users;
 
   useEffect(()=> {
+    if (!authUser?._id) return;
     getUsers();
     getFriendRequests();
-  },[onlineUsers])
+  },[authUser?._id])
 
   const navigate = useNavigate();
 
