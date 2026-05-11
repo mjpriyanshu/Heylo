@@ -16,62 +16,62 @@ const TermsModal = ({ onClose }) => {
             
             <section>
                 <h3 className='text-violet-400 font-medium text-lg md:text-xl mb-2'>Introduction</h3>
-                <p>Explain that Heylo is a real-time messaging platform where users can communicate and share images securely.</p>
+                <p>Welcome to Heylo. We are a real-time messaging platform designed to help you communicate and share images securely with your friends. By accessing or using our services, you agree to be bound by these terms.</p>
             </section>
 
             <section>
                 <h3 className='text-violet-400 font-medium text-lg md:text-xl mb-2'>Account Responsibility</h3>
-                <p>Tell users they are responsible for activities performed using their account.</p>
+                <p>You are solely responsible for all activities that occur under your account. You agree to maintain the confidentiality of your account credentials and notify us immediately of any unauthorized use.</p>
             </section>
 
             <section>
-                <h3 className='text-violet-400 font-medium text-lg md:text-xl mb-2'>Real Email Requirement</h3>
+                <h3 className='text-violet-400 font-medium text-lg md:text-xl mb-2'>Email Requirement</h3>
                 <ul className='list-disc pl-5 space-y-1.5'>
-                    <li>Users should register using a real and accessible email address.</li>
-                    <li>Fake or inaccessible emails may prevent account recovery.</li>
-                    <li>Features like password reset depend on email access.</li>
+                    <li>You must register using a real, accessible email address that belongs to you.</li>
+                    <li>Using fake, temporary, or inaccessible email addresses may result in permanent loss of access to your account.</li>
+                    <li>Critical features, such as account recovery and password resets, rely entirely on your ability to access your registered email.</li>
                 </ul>
             </section>
 
             <section>
                 <h3 className='text-violet-400 font-medium text-lg md:text-xl mb-2'>Password & Security</h3>
                 <ul className='list-disc pl-5 space-y-1.5'>
-                    <li>Passwords are encrypted/hashed securely.</li>
-                    <li>The platform does not store plain-text passwords.</li>
-                    <li>Users should keep credentials private.</li>
+                    <li>Your security is our priority. All passwords are securely hashed and encrypted.</li>
+                    <li>We never store or have access to your plain-text passwords.</li>
+                    <li>You are expected to choose a strong password and keep it private to prevent unauthorized access.</li>
                 </ul>
             </section>
 
             <section>
-                <h3 className='text-violet-400 font-medium text-lg md:text-xl mb-2'>OAuth Login Notice</h3>
+                <h3 className='text-violet-400 font-medium text-lg md:text-xl mb-2'>OAuth & Third-Party Logins</h3>
                 <ul className='list-disc pl-5 space-y-1.5'>
-                    <li>Users signing in with Google/GitHub authenticate through those providers.</li>
-                    <li>Password reset for OAuth accounts is handled by the provider itself.</li>
-                    <li>OAuth users may not be able to login using manual password authentication unless they separately create a password.</li>
+                    <li>When you sign in using third-party providers (like Google or GitHub), you are authenticating directly through their secure systems.</li>
+                    <li>Any password resets or security checks for OAuth accounts must be handled through the respective provider.</li>
+                    <li>If you signed up via OAuth, you will not be able to log in using a manual password unless you explicitly configure a password in your Heylo account settings.</li>
                 </ul>
             </section>
 
             <section>
                 <h3 className='text-violet-400 font-medium text-lg md:text-xl mb-2'>Privacy Notice</h3>
                 <ul className='list-disc pl-5 space-y-1.5'>
-                    <li>Only basic account data is stored.</li>
-                    <li>Shared images are uploaded securely using Cloudinary.</li>
-                    <li>Private messages are intended to remain private.</li>
-                    <li>User data is never intentionally sold.</li>
+                    <li>We collect only the essential data required to operate your account and provide our services.</li>
+                    <li>Any images you share are uploaded and hosted securely through our trusted partner, Cloudinary.</li>
+                    <li>Your private messages are strictly intended to remain private between you and your recipients.</li>
+                    <li>We respect your privacy—your personal data is never intentionally sold or monetized.</li>
                 </ul>
             </section>
 
             <section>
                 <h3 className='text-violet-400 font-medium text-lg md:text-xl mb-2'>Content & Community Rules</h3>
-                <p className='mb-2 text-gray-400'>Disallow:</p>
-                <ul className='list-disc pl-5 space-y-1.5'>
-                    <li>Illegal content</li>
-                    <li>Harassment</li>
-                    <li>Spam</li>
-                    <li>Malware</li>
-                    <li>NSFW/extreme abusive content</li>
+                <p className='mb-2 text-gray-300'>To maintain a safe and welcoming environment, the following activities and content are strictly prohibited:</p>
+                <ul className='list-disc pl-5 space-y-1.5 text-gray-400'>
+                    <li>Sharing illegal content or engaging in unlawful activities.</li>
+                    <li>Harassment, bullying, or targeted abuse of other users.</li>
+                    <li>Spreading spam, unsolicited promotions, or malicious links.</li>
+                    <li>Distributing malware, viruses, or harmful software.</li>
+                    <li>Sharing highly sensitive, NSFW, or extremely abusive content.</li>
                 </ul>
-                <p className='mt-3 text-red-400 font-medium'>Mention accounts may be suspended for misuse.</p>
+                <p className='mt-3 text-red-400 font-medium'>Please be aware that any violation of these rules may result in the immediate suspension or permanent termination of your account without notice.</p>
             </section>
 
         </div>
