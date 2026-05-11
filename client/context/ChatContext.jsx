@@ -17,8 +17,20 @@ export const ChatProvider = ({ children }) => {
     const [typingUsers, setTypingUsers] = useState({});
     const selectedUserRef = useRef(null);
 
-    const {socket, axios} = useContext(AuthContext);
+    const {socket, axios, authUser} = useContext(AuthContext);
 
+    // Clear chat state when user logs out
+    useEffect(() => {
+        if (!authUser) {
+            setMessages([]);
+            setUsers([]);
+            setSelectedUser(null);
+            setUnseenMessages({});
+            setFriendRequests([]);
+            setSentRequests([]);
+            setTypingUsers({});
+        }
+    }, [authUser]);
     // Keep ref updated with current selectedUser
     useEffect(() => {
         selectedUserRef.current = selectedUser;

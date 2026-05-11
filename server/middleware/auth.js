@@ -1,6 +1,8 @@
 import User from '../models/User.js';
 import jwt from 'jsonwebtoken';
 
+const cache = new Map();
+
 // Middleware for authentication
 
 export const protectRoute = async (req, res, next) => {
@@ -16,10 +18,18 @@ export const protectRoute = async (req, res, next) => {
         }
 
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
-
-        const user = await User.findById(decoded.userId).select('-password -resetPasswordToken -resetPasswordExpires')
-        if (!user) {
-            return res.json({success: false, message: "User not found"});
+        const cacheKey = `auth_user_${decoded.userId}`;
+        
+        let user;
+        if (cache.has(cacheKey)) {
+            user = cache.get(cacheKey);
+        } else {
+            user = await User.findById(decoded.userId).select('-password -resetPasswordToken -resetPasswordExpires');
+            if (!user) {
+                return res.json({success: false, message: "User not found"});
+            }
+            cache.set(cacheKey, user);
+            setTimeout(() => cache.delete(cacheKey), 10000); // 10s TTL
         }
 
         req.user = user;

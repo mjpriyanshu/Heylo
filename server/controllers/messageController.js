@@ -4,6 +4,8 @@ import cloudinary from "../lib/cloudinary.js";
 import { getConversationId } from "../lib/utils.js";
 import { io, userSocketMap } from "../lib/socket.js";
 
+const cache = new Map();
+
 const isHttpUrl = (value) => {
     if (typeof value !== "string") return false;
     try {
@@ -18,14 +20,25 @@ const isHttpUrl = (value) => {
 export const getUsersForSidebar = async (req, res) => {
     try {
         const userId = req.user._id; 
+        const cacheKey = `sidebar_users_${userId}`;
         
-        // Get user with populated friends
-        const user = await User.findById(userId).populate('friends', '-password');
-        if (!user) {
-            return res.json({ success: false, message: "User not found" });
+        let filteredUsers;
+        
+        if (cache.has(cacheKey)) {
+            filteredUsers = cache.get(cacheKey);
+        } else {
+            // Get user with populated friends
+            const user = await User.findById(userId).populate('friends', '-password');
+            if (!user) {
+                return res.json({ success: false, message: "User not found" });
+            }
+            filteredUsers = user.friends;
+            
+            // Cache for 30 seconds
+            cache.set(cacheKey, filteredUsers);
+            setTimeout(() => cache.delete(cacheKey), 30000);
         }
 
-        const filteredUsers = user.friends;
         const friendIds = filteredUsers.map((friend) => friend._id);
 
         // Count unseen messages in a single query (fixes N+1)
