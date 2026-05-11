@@ -2,6 +2,7 @@ import React, { useContext, useState } from 'react'
 import assets from '../assets/assets'
 import { AuthContext } from '../../context/AuthContext'
 import { useNavigate } from 'react-router-dom'
+import TermsModal from '../components/TermsModal'
 
 const LoginPage = () => {
 
@@ -13,6 +14,7 @@ const LoginPage = () => {
   const [bio, setBio] = useState("")
   const [agreedToTerms, setAgreedToTerms] = useState(false)
   const [isDataSubmitted, setIsDataSubmitted] = useState(false)
+  const [showTerms, setShowTerms] = useState(false)
 
   const {login, checkUsername} = useContext(AuthContext);
   const navigate = useNavigate();
@@ -93,7 +95,9 @@ const LoginPage = () => {
                   required
                   className='cursor-pointer mt-1'
                 />
-                <p>I agree to the terms of use & privacy policy.</p>
+                <p>
+                  I agree to the <span onClick={() => setShowTerms(true)} className='text-violet-400 hover:text-violet-300 cursor-pointer underline'>terms of use & privacy policy</span>.
+                </p>
               </div>
             )}
 
@@ -112,6 +116,8 @@ const LoginPage = () => {
             </div>
 
         </form>
+
+        {showTerms && <TermsModal onClose={() => setShowTerms(false)} />}
     </div>
     
   )
