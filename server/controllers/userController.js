@@ -196,11 +196,39 @@ export const updateProfile = async (req, res) => {
             ...(username && username !== currentUser.username && {username, lastUsernameChange: Date.now()})
         };
 
-        if(!profilePic){
-            updatedUser = await User.findByIdAndUpdate(userId, updateData, {new: true});
-        }else{
-            const upload = await cloudinary.uploader.upload(profilePic);
-            updatedUser = await User.findByIdAndUpdate(userId, {...updateData, profilePic: upload.secure_url}, {new: true});
+        const isHttpUrl = (value) => {
+            if (typeof value !== "string") return false;
+            try {
+                const url = new URL(value);
+                return url.protocol === "http:" || url.protocol === "https:";
+            } catch {
+                return false;
+            }
+        };
+
+        if (!profilePic) {
+            updatedUser = await User.findByIdAndUpdate(userId, updateData, { new: true });
+        } else {
+            if (typeof profilePic !== "string") {
+                return res.json({ success: false, message: "Invalid profilePic" });
+            }
+
+            // Task 7: accept direct Cloudinary uploads from client (profilePic is already a URL)
+            if (isHttpUrl(profilePic)) {
+                updatedUser = await User.findByIdAndUpdate(
+                    userId,
+                    { ...updateData, profilePic },
+                    { new: true }
+                );
+            } else {
+                // Backward compatibility: older clients may still send base64/data URIs
+                const upload = await cloudinary.uploader.upload(profilePic);
+                updatedUser = await User.findByIdAndUpdate(
+                    userId,
+                    { ...updateData, profilePic: upload.secure_url },
+                    { new: true }
+                );
+            }
         }
 
         const safeUser = sanitizeUser(updatedUser);
